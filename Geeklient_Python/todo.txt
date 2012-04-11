@@ -1,0 +1,57 @@
+Roadmap:
+0.1:
+    Yhdistäminen                            DONE
+    Poistuminen                             DONE
+    Käyttäjien listaus                      DONE
+    Viestien vastaanotto                    DONE
+    Viestien lähetys                        DONE
+0.2:
+    Lisenssin tulostus komennolla           DONE
+    Ikkunan koon määritykset                DONE
+    Hostname tuki (ip ja domain)            DONE
+    Epäonnistuneen yhdistämisen käsittely   DONE
+0.3:
+    Kentän vaihto ip_dialogissa             DONE
+    AIChatin protokollamuutokset            DONE
+    Debugging rivien poistaminen            ENOUGH
+    Liian lyhyiden käyttäjänimien estäminen NONEED
+    Private Message -tuki                   DONE
+0.4:
+    Offline-tila                            DONE
+    Tuki palvelimen vaihdolle komennolla    DONE
+    Käyttäjän kickaus tuki kuntoon          testaamatta, jos edes oikein tehty
+    Viestidialogi kick yms. viesteille      DONE
+    Ylimääräisen rivin poistaminen          DONE
+0.5:
+    Asetusten tallennus (ConfigParser)      DONE
+    Värit                                   DONE
+    Korostukset käyttäjänimen perusteella   rikki
+    Users-listan järjestäminen              testaamatta
+    WWW-osoitteet toimiviksi                DONE
+0.6:
+    Ylävalikko                              DONE
+    Uudelleen yhdistäminen valikoista       DONE
+    Värin valinta valokosta                 DONE
+    Lisenssin näyttö valikoista             DONE
+    About-dialogi                           DONE
+    Privaattiviestit valikoista             DONE
+    Asetusten tallennus valikoista          DONE
+0.7:
+    Ilmoitukset
+    Äänet
+    Users-listan piilotus
+    Kohdistimen vaihto linkin kohdalla
+0.8:
+    Jakaminen useampaan osaan               DONE
+    Komentorivi parametrit
+    main, net ja ui api vakaus
+0.9:
+    .deb, .tar.xz, .rpm? -paketti
+    git-repo?
+    README
+    developer_information.txt
+
+1.0:
+    Kuvake
+    Julkaisu
+    Mahdollinen testaus Windowsilla, mutta sitä minä en tee
