@@ -1,0 +1,64 @@
+# This file is part of the Geeklient and 
+# free to redistribute and modify
+
+Developer Guidelines:
+  -Do not tie objects too closely, they must be replaceable. For example
+  Networking-object can't call UI interfaces directly, but through UI-object's
+  interfaces.
+  -Lines shouldn't be too long. They should be kept about 80 characters long
+  maximum.
+  -Unnecessary empty lines should be avoided.
+  -Os depent things should be avoided unless that's the plan
+  -Functions should use _ as word separator and variables should use capitals
+  -Respect the BSD-license
+  -Do your best
+  -As contributor you may add your name to about-objects author, documentor or 
+    artist list
+  -Style guidelines can be found here: http://www.python.org/dev/peps/pep-0008/
+
+UI-object:
+  It's possible to create new user interfaces by developing a new UI-object, but
+  there are several things to remember.
+
+  UI-object requirements:
+  Required functions:
+    __init__(self,height,width):
+        Creates the user interface, height and width specify asked, but not 
+        required, window size
+    begin(self):
+        Begins to run net.listen(), usually connects it to a timeout
+    add_message(self,message,colour='None'):
+        Adds a new message to messagebox
+    add_user(self,name):
+        Adds a new user to userlist
+        Can be dummy function, if userlist is not implemented
+    connect_dialog(self,host='',name=''):
+        Asks for username and hostname to connect to
+    message_dialog(self,message,type="info"):
+        Displays a message
+    remove_user(self,name):
+        Removes user from userlist
+        Can be dummy function, if userlist is not implemented
+    quit(self):
+        Quits the interface and networking (calls net.quit())
+
+Networking-object:
+  Implements connection between client and server.
+  Is not ment to be replaced.
+  
+  Functions:  
+    connect(self):
+        Connects to the server
+    boolean is_connected(self):
+        Checks if client is connected
+    kill(self):
+        Kills networking
+    boolean listen(self):
+        Listens for new messages, used with UI-object's timeout
+    quit(self):
+        Closes connections
+    str recv_message(self,lenght=1024):
+        Receives messages
+    send_message(self,message,type="message",receiver=None):
+        Sends messages
+        A few types of messages can be sent
