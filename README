@@ -1,5 +1,6 @@
 Small chat program.
-This program will have server and multiplatform client. Linux is the target OS.
+This program will have server and multiplatform client. 
+GNU/Linux is the target OS.
 
 Server directory has the server software,
 Geeklient directory has current client software and
