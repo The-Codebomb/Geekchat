@@ -1,4 +1,10 @@
-Small chat program. Better description TBD.
-Will have server and multiplatform client part. Linux is the target OS.
+Small chat program.
+This program will have server and multiplatform client. Linux is the target OS.
 
+Server directory has the server software,
+Geeklient directory has current client software and
+Geeklient_Python directory has old and obsolete Python version of the client
+
+Our C and C++ skills are quite minimal right now, but we're doing this 
+program to improve them.
 *** Note that we do not accept any outside contributions at the moment ***
