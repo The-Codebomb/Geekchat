@@ -19,9 +19,16 @@
  */
 
 #include "networking.hpp"
+//#include <sys/socket.h>
 
-int Networking::connect() {
-    
+int Networking::connect() { // pitäskö tähän kuitenkin laittaa ip-osote parametriksi?
+    Networking::socket = socket(PF_INET, SOCK_STREAM, 0);
+    if (Networking::socket < 0) {
+        return -1;
+    }
+    name.sin_family = AF_INET;
+    name.sin_port = htons(Networking::port);
+    name.sin_addr.s_addr = htons(Networking::host);
 }
 
 int Networking::sendMessage(char* message) {

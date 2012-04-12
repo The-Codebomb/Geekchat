@@ -28,15 +28,16 @@
 class Networking {
     int socket;
     char* host;
-    int port = 13377;
+    //int port = 13377;
     
     public:
-        char* name;
-        char* colour = "000000";
-        char** users;
+        char name[10]; // length??
+        //char colour[7] = "000000";
+        char users; // change!!
     
     /*
      * Connects to server
+     * Called by UI when trying to connect
      * @return < 0 in error
      */
     int connect();
@@ -49,19 +50,14 @@ class Networking {
     int sendMessage(char*);
     
     /*
-     * Receives message
-     * @return the message
-     */
-    char* receiveMessage();
-    
-    /*
      * Listens for new messages
+     * Should be run frequently by UI
      * @return < 0 in error
      */
     int listen();
     
     /*
-     * Stops all networking 
+     * Stops all networking when disconnecting or closing program
      */
     void quit();
 };
