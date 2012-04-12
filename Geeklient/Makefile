@@ -3,7 +3,7 @@ CC = gcc
 OBJECTS += src/networking.o src/main.o
 TARGET = geeklient
 
-all: src/networking.o src/main.o
+all: $(OBJECTS)
 	$(CC) $(OBJECTS) -o $(TARGET)
 
 src/networking.o: 
