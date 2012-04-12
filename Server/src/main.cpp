@@ -1,7 +1,7 @@
 /*
     Geekchat server software.
     Copyright (C) 2012 Codebomb
-    Copyright (c) 2012 Anssi Kanervisto
+    Copyright (c) 2012 Anssi Kanervisto aka Miffyli
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -31,6 +31,7 @@
 #define PORT 13377      //Port where connections should come
 #define MAXUSERS 50     //Size of chatters array (max amount of clients connected)
 #define BUFFER 1024     //Maximum message size from client
+#define SLEEPTIME 50000 //Sleeptime between loops (1000000 = 1 second)
 
 using namespace std;
 
@@ -50,11 +51,15 @@ void newConnection(int sock, char ipaddr[]);
 void newMessageFromClient(char msgBuffer[], int posInArray);
 void closeConnection(int posInArray);
 void removeChatter(int posInArray);
-void sendMsgForward(char message[]);
+void sendMsgForward(char msgBuffer[], int posInArray, int dontSendBack=-1);
+void sendUserList(int posInArray);
 
-int mainListeningSocket, tempSock;      //mainListeningSocket = all incoming connections go here.
-struct chatter chatterArray[MAXUSERS];      //chatterArray contains info of all connections (ip, name and socket)
-struct sockaddr_in clientname;      //clientname used to store incoming connections data
+//mainListeningSocket = all incoming connections go here.
+int mainListeningSocket, tempSock;
+//chatterArray contains info of all connections (ip, name and socket)
+struct chatter chatterArray[MAXUSERS];
+//clientname used to store incoming connections data
+struct sockaddr_in clientname;
 uint32_t size;
 
 // Contains initializing (listening socket etc.) and main loop
@@ -71,7 +76,8 @@ int main() {
     while(1) {              // main loop
 
         //check if new incoming connections
-        tempSock = accept(mainListeningSocket, (struct sockaddr *) &clientname, &size);
+        tempSock = accept(mainListeningSocket, (struct sockaddr *) &clientname,
+                           &size);
 
         if (tempSock != -1) {
             newConnection(tempSock, inet_ntoa (clientname.sin_addr));
@@ -82,72 +88,158 @@ int main() {
             if (chatterArray[i].ip == "") {
                 break;
             }
+            //Check/Read if there is any new messages in buffers
             recvDat = recv(chatterArray[i].socketID, msgBuffer, BUFFER, 0);
 
             if (recvDat != -1) {
                 if (recvDat == 0) {
                     continue;
                 }
+                //If new message recieved, continue to handle it in function
                 newMessageFromClient(msgBuffer, i);
             }
         }
 
-        usleep(50000);        // 1000000 = 1 second
+        usleep(SLEEPTIME);        // 1000000 = 1 second
     }
     return 0;
 }
 
 // Handles new message from client (send forward etc.)
 void newMessageFromClient(char msgBuffer[], int posInArray) {
+
     string message = msgBuffer;
-    string checkIfSysMsg = message.substr(0,12);
+    int msgLn = message.length();
+    string checkIfSysMsg = "";
+
+    if (msgLn > 12) {
+        checkIfSysMsg = message.substr(0,12);
+    }
 
     //Check if system message for program
     if (checkIfSysMsg == ":::SYSTEM:::") {
 
-        checkIfSysMsg = message.substr(12,13);
+        //Get system message number
+        if (msgLn < 12) {
+            newMsg("---Invalid system message number: " + message);
+            return;
+        }
+
+        checkIfSysMsg = message.at(12);
+        newMsg("--- System message: " + checkIfSysMsg);
 
         //If system2 message, delete chatter from array.
         if (checkIfSysMsg == "2") {
             newMsg("--- Connection closed: " + chatterArray[posInArray].ip);
             closeConnection(posInArray);
-            sendMsgForward(msgBuffer);
+            sendMsgForward(msgBuffer, posInArray);
+
+        //Check if client is asking name check
+        } else if (checkIfSysMsg == "3") {
+
+            //Check for forbidden chars with regexp?
+
+            newMsg("---SYSTEM3 message");
+            bool nameInUse = false;
+
+            if (message.length() < 16) {
+                newMsg("---Invalid msg length in system3: " + message);
+                return;
+            }
+            string sentName = message.substr(14, message.length() - 15);
+            newMsg("...New name: " + sentName);
+            for (int i=0; i < MAXUSERS; i++) {
+                if (chatterArray[i].ip == "") {
+                    break;
+                }
+                if (sentName == chatterArray[i].name) {
+                    nameInUse = true;
+                    break;
+                }
+            }
+
+            if (nameInUse) {
+                //If name was already in use
+                send(chatterArray[posInArray].socketID, "FALSE", BUFFER, 0);
+            } else {
+                //If name is free to use
+                send(chatterArray[posInArray].socketID, "TRUE", BUFFER, 0);
+                chatterArray[posInArray].name = sentName;
+                sendUserList(posInArray);
+
+                //String -> Char array
+                string newMsgToClients = ":::SYSTEM:::1[" + sentName +"]";
+                int msgLen = newMsgToClients.length();
+                char newMsgBuffer[msgLen];
+
+                for (int i=0; i < msgLen; i++) {
+                    newMsgBuffer[i] = newMsgToClients.at(i);
+                }
+
+                sendMsgForward(newMsgBuffer, posInArray, posInArray);
+            }
         }
 
     } else {
-        sendMsgForward(msgBuffer);
+        sendMsgForward(msgBuffer, posInArray);
     }
     cout << message << " :: " << chatterArray[posInArray].socketID << endl;
     //Viestin tarkistus ja eteenpäin lähetys ym.
 }
 
+//Sends list of current users to given connection
+void sendUserList(int posInArray) {
+
+}
+
 // Sends given message to all connected sockets
-void sendMsgForward(char message[]) {
+void sendMsgForward(char msgBuffer[], int posInArray, int dontSendBack) {
+
 
     for(int i = 0; i < MAXUSERS; i++) {
 
         if (chatterArray[i].ip == "") {
             break;
         }
+        if (i == dontSendBack) {
+            continue;
+        }
         //Check if there's error in sending to certain socket
-        if (send(chatterArray[i].socketID, message, BUFFER, 0) < 0) {
+        if (send(chatterArray[i].socketID, msgBuffer, BUFFER, 0) < 0) {
 
+            // If error occured...
             if (errno == EPIPE) {
                 cout << "Socket " << chatterArray[i].socketID << ":";
                 newMsg("--- Socket to " + chatterArray[i].ip + " crashed");
                 closeConnection(i);
+                //Send disconnection message about crashed client
+                string newMsgString = ":::SYSTEM:::2[" +
+                                        chatterArray[posInArray].name + "]";
+                int strLength = newMsgString.length();
+                char newMessage[strLength];
+
+                for (int i=0; i < strLength; i++) {
+                    newMessage[i] = newMsgString.at(i);
+                }
+
+                sendMsgForward(newMessage, posInArray);
+
             } else {
-                newMsg("--- Other error in socket " + chatterArray[i].socketID);
+                newMsg("--- Other error in socket "
+                       + chatterArray[i].socketID);
             }
         } else {
-            cout << "---Message '" << message << "' sent to " << chatterArray[i].socketID << endl;
+            cout << "---Message '" << msgBuffer << "' sent to "
+                    << chatterArray[i].socketID << endl;
         }
     }
 }
 
 // Closes connection to certain client and removes chatter
 void closeConnection(int posInArray) {
+    //Close connection
     shutdown(chatterArray[posInArray].socketID, 2);
+    //Remove chatter from connections array
     removeChatter(posInArray);
 }
 
@@ -171,6 +263,7 @@ void removeChatter(int posInArray) {
 
 // Adds new incoming connection to chatters array
 void arrayAddSock(int sock, string ipaddr) {
+    //Finds where is first "empty slot"
     for(int i = 0; i < MAXUSERS; i++) {
         if (chatterArray[i].ip == "") {
             chatterArray[i].ip = ipaddr;
@@ -185,6 +278,7 @@ void arrayAddSock(int sock, string ipaddr) {
 void newConnection(int sock, char ipaddr[]) {
     string tempAddr = ipaddr;
 
+    //Set NONBLOCKING mode for socket
     if (fcntl (sock, F_SETFL, O_NONBLOCK) < 0) {
         errorMsg("Error in chaning flag of incoming connection socket");
     }
@@ -212,7 +306,7 @@ int make_socket (uint16_t port) {
 
     sock = socket (PF_INET, SOCK_STREAM, 0);
     if (sock < 0) {
-        errorMsg("error in creating listening socket");
+        errorMsg("error when creating listening socket");
     }
 
     if (fcntl (sock, F_SETFL, O_NONBLOCK) < 0) {
@@ -223,8 +317,9 @@ int make_socket (uint16_t port) {
     name.sin_port = htons (port);
     name.sin_addr.s_addr = htonl (INADDR_ANY);
 
+    //Bind socket data to socket
     if (bind (sock, (struct sockaddr *) &name, sizeof (name)) < 0) {
-        errorMsg("error in binding listening socket");
+        errorMsg("error when binding listening socket");
     }
     return sock;
 }
