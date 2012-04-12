@@ -1,14 +1,15 @@
 CC = gcc
 
-FILES = src/networking.o src/main.o
+OBJECTS += src/networking.o src/main.o
+TARGET = geeklient
 
-src/networking.o: src/networking.cpp
-src/main.o: src/main.cpp
+all: src/networking.o src/main.o
+	$(CC) $(OBJECTS) -o $(TARGET)
 
-default:
-	$(CC) $(FILES) -o geeklient
-
-all: default
+src/networking.o: 
+	$(CC) -c src/networking.cpp -o src/networking.o
+src/main.o: 
+	$(CC) -c src/main.cpp -o src/main.o
 
 clean:
-	rm $(FILES)
+	rm $(FILES) $(TARGET)
