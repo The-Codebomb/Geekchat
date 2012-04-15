@@ -22,6 +22,16 @@
 #define NETWORKING_OBJECT
 #include <string.h>
 
+/* 
+ * Message-struct
+ * Used in communication between ui and Networking-object
+ */
+struct Message {
+    char message[1024];
+    char sender[10];
+    char receiver[10];
+}
+
 /*
  * Networking-object class 
  * Provides all needed networking apis for Geekchat clients
@@ -39,6 +49,7 @@ class Networking {
     
     /*
      * Constructor
+     * @param pointer to ui-object
      */
     Networking(void *ui_pointer) {
         port = 13377;
@@ -60,7 +71,7 @@ class Networking {
      * @param int length of the message
      * @return < 0 in error
      */
-        int sendMessage(char[],char[],int);
+        int sendMessage(Message);
     
     /*
      * Listens for new messages
