@@ -19,30 +19,59 @@
  */
 
 #include "networking.hpp"
-//#include <sys/socket.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+using namespace std;
 
 int Networking::connect() { // pitäskö tähän kuitenkin laittaa ip-osote parametriksi?
-    Networking::socket = socket(PF_INET, SOCK_STREAM, 0);
+    int res; // result value
+    struct sockaddr_in name;
+    
+    Networking::socket = ::socket(PF_INET, SOCK_STREAM, 0);
     if (Networking::socket < 0) {
         return -1;
     }
     name.sin_family = AF_INET;
-    name.sin_port = htons(Networking::port);
-    name.sin_addr.s_addr = htons(Networking::host);
+    name.sin_port = htons(this->port);
+    name.sin_addr.s_addr = htons(this->host);
+    
+    res = ::connect(Networking::socket,(struct sockaddr *) &name,sizeof(name));
+    if (res < 0) {
+        return -2;
+    }
 }
 
-int Networking::sendMessage(char* message) {
-    
+int Networking::sendMessage(char* message, int length=1024) {
+    int res;
+    res = send(socket, message, length, 0);
+    return res;
 }
 
-char* Networking::receiveMessage() {
-    
+int Networking::sendMessage(char* receiver, char* message, int length=1024) { // WIP
+    int res;
+    res = sendMessage(message,length);
+    return res;
+}
+
+char* Networking::receiveMessage(char* message, int length=1024) {
+    int res;
+    res = recv(this->socket, message, length, 0);
+    if (res < 0) {
+        return 0;
+    }
+    return message;
 }
 
 int Networking::listen() {
-    
+    char* message;
+    message = receiveMessage(message);
+    if (message == 0) {
+        return 0;
+    }
+    // paloittele ja sitten kutsu ui:n funktioita
 }
 
 void Networking::quit() {
-    
+    // tee poistumiskomennot
+    // vapauta muistia
 }

@@ -19,7 +19,15 @@
  */
 
 #include "networking.hpp"
+using namespace std;
+
+/*
+ * Doesn't print anything to user nor ask any user input
+ * Handles only initialization of ui and Networking and 
+ * reading configuration file
+ */
 
 int main(int argc, char** argv) {
-    ;
+    void* ui;
+    Networking net = Networking(&ui);
 }

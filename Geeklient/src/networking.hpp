@@ -20,20 +20,31 @@
 
 #ifndef NETWORKING_OBJECT
 #define NETWORKING_OBJECT
+#include <string.h>
 
 /*
  * Networking-object class 
  * Provides all needed networking apis for Geekchat clients
  */
 class Networking {
-    int socket;
-    char* host;
-    //int port = 13377;
-    
+    private:
+        int socket;
+        char host;
+        int port;
+        void *ui;
     public:
-        char name[10]; // length??
-        //char colour[7] = "000000";
-        char users; // change!!
+        char name[10];
+        char colour[7];
+        char users; // ***change***
+    
+    /*
+     * Constructor
+     */
+    Networking(void *ui_pointer) {
+        port = 13377;
+        strcpy(colour,"000000");
+        ui = ui_pointer;
+    }
     
     /*
      * Connects to server
@@ -44,10 +55,12 @@ class Networking {
     
     /*
      * Sends message to server
-     * @param char* message to send
+     * @param char[] receiver (can be 'All' or a username)
+     * @param char[] message to send
+     * @param int length of the message
      * @return < 0 in error
      */
-    int sendMessage(char*);
+        int sendMessage(char[],char[],int);
     
     /*
      * Listens for new messages
@@ -60,5 +73,9 @@ class Networking {
      * Stops all networking when disconnecting or closing program
      */
     void quit();
+    
+    private:
+        char* receiveMessage(char*,int);
+        int sendMessage(char[],int);
 };
 #endif
