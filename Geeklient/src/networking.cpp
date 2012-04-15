@@ -27,18 +27,19 @@ int Networking::connect() { // pitäskö tähän kuitenkin laittaa ip-osote para
     int res; // result value
     struct sockaddr_in name;
     
-    Networking::socket = ::socket(PF_INET, SOCK_STREAM, 0);
-    if (Networking::socket < 0) {
+    this->socket = ::socket(PF_INET, SOCK_STREAM, 0);
+    if (this->socket < 0) {
         return -1;
     }
     name.sin_family = AF_INET;
     name.sin_port = htons(this->port);
     name.sin_addr.s_addr = htons(this->host);
     
-    res = ::connect(Networking::socket,(struct sockaddr *) &name,sizeof(name));
+    res = ::connect(this->socket,(struct sockaddr *) &name,sizeof(name));
     if (res < 0) {
         return -2;
     }
+    // WIP
 }
 
 int Networking::sendMessage(char* message, int length=1024) {
@@ -47,7 +48,7 @@ int Networking::sendMessage(char* message, int length=1024) {
     return res;
 }
 
-int Networking::sendMessage(char* receiver, char* message, int length=1024) { // WIP
+int Networking::sendMessage(Message message) { // WIP
     int res;
     res = sendMessage(message,length);
     return res;

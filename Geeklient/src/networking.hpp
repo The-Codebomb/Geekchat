@@ -27,7 +27,7 @@
  * Used in communication between ui and Networking-object
  */
 struct Message {
-    char message[1024];
+    char message[1024]; // dynamic length?
     char sender[10];
     char receiver[10];
 }
@@ -45,7 +45,7 @@ class Networking {
     public:
         char name[10];
         char colour[7];
-        char users; // ***change***
+        char users; // ***change to dynamic array of char arrays***
     
     /*
      * Constructor
