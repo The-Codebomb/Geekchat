@@ -20,17 +20,20 @@
 
 #ifndef NETWORKING_OBJECT
 #define NETWORKING_OBJECT
-#include <string.h>
+
+#include <string>
+
+#define MSG_LENGTH 1024
 
 /* 
  * Message-struct
  * Used in communication between ui and Networking-object
  */
 struct Message {
-    char message[1024]; // dynamic length? FIXME
-    char sender[10];
-    char receiver[10];
-    char colour[7];
+    std::string message;
+    std::string sender;
+    std::string receiver;
+    std::string colour;
 };
 
 /*
@@ -40,13 +43,13 @@ struct Message {
 class Networking {
     private:
         int socket;
-        char* host; // length? FIXME
+        std::string host;
         int port;
-        void *ui;
+        void *ui; // FIXME
     public:
-        char name[10];
+        std::string name;
         char colour[7];
-        char users; // ***change to dynamic array of char arrays*** FIXME
+        std::string users;
     
     /*
      * Constructor
@@ -61,11 +64,11 @@ class Networking {
     /*
      * Connects to server
      * Called by UI when trying to connect
-     * @param char[] host to connect
-     * @param char[] user name to use
+     * @param string host to connect
+     * @param string user name to use
      * @return < 0 in error
      */
-    int connect(char[],char[]);
+    int connect(std::string,std::string);
     
     /*
      * Sends message to server
@@ -88,7 +91,8 @@ class Networking {
     void quit();
     
     private:
-        char* receiveMessage(char*,int);
-        int sendMessage(const char[],int);
+        std::string receiveMessage(int=MSG_LENGTH);
+        int sendMessage(const char*);
+        int sendMessage(std::string);
 };
 #endif

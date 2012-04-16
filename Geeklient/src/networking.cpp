@@ -18,7 +18,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define MSG_LENGTH 1024
 #define MSG_SYS_BASE :::SYSTEM:::
 #define MSG_SYS_CONNECT MSG_SYS_BASE1
 #define MSG_SYS_DISCONNECT MSG_SYS_BASE2
@@ -40,77 +39,81 @@ Networking::Networking(void *ui_pointer) {
 }
 
 Networking::~Networking() { // FIXME
-    //delete[] socket;
-    delete[] host;
-    //delete[] port;
-    //delete[] ui;
-    delete[] name;
-    delete[] colour;
-    //delete[] users;
 }
 
-int Networking::connect(char* host,char* uname) {
-    strcpy(this->host,host);
-    strcpy(this->name,uname);
-    delete[] host, uname;
+int Networking::connect(string host,string uname) {
+    this->host = host;
+    this->name = uname;
     
     int res; // result value
     struct sockaddr_in name;
     
     this->socket = ::socket(PF_INET, SOCK_STREAM, 0);
     if (this->socket < 0) {
-        return -1;
+        return -2;
     }
     name.sin_family = AF_INET;
     name.sin_port = htons(this->port);
-    name.sin_addr.s_addr = htons(inet_addr(this->host));
+    name.sin_addr.s_addr = htons(inet_addr(this->host.c_str()));
     
     res = ::connect(this->socket,(struct sockaddr *) &name,sizeof(name));
     if (res < 0) {
-        return -2;
+        return -3;
     }
-    char msg[sizeof("MSG_SYS_CHKUSRNAME")+12] = "MSG_SYS_CHKUSRNAME[";
-    strcat(msg,this->name);
-    strcat(msg,"]");
-    sendMessage(msg,strlen(msg));
+    string message = "MSG_SYS_CHKUSRNAME[";
+    message.append(this->name);
+    message.append("]");
+    sendMessage(message);
+    string msg = receiveMessage();
+    if (msg == "FALSE") {
+        return -1;
+    }
+    
 }
 
 int Networking::sendMessage(Message message) {
     int res;
-    string msg = "";
-    msg.append(this->name); // vai pitäskö käyttää message.sender ?
+    string msg = this->name;
     msg.append(":");
-    msg.append(this->colour); // vai pitäskö käyttää message.colour ?
+    msg.append(this->colour);
     msg.append(":");
     msg.append(message.receiver);
     msg.append(":");
     msg.append(message.message);
-    res = sendMessage(msg.c_str(),msg.size());
+    res = sendMessage(msg);
     return res;
 }
 
-int Networking::sendMessage(const char* message, int length=1024) {
+int Networking::sendMessage(const char* message) {
+    string msg = message;
+    return sendMessage(msg);
+}
+
+int Networking::sendMessage(string message) {
     int res;
-    res = send(socket, message, length, 0);
+    res = send(socket, message.c_str(), message.size(), 0);
     return res;
 }
 
-char* Networking::receiveMessage(char* message, int length=MSG_LENGTH) {
+string Networking::receiveMessage(int length) {
     int res;
-    res = recv(this->socket, message, length, 0);
+    char* msg = new char[length];
+    res = recv(this->socket, msg, length, 0);
     if (res < 0) {
         return 0;
     }
+    string message = msg;
+    delete[] msg;
     return message;
 }
 
 int Networking::listen() {
-    char* message;
-    message = receiveMessage(message);
-    if (message == 0) {
+    string message;
+    message = receiveMessage();
+    if (message.data() == 0) {
         return 0;
     }
-    Message msg;
+    Message msg;/*
     char * parts;
     parts = strtok(message,":");
     // tarkistukset tähän
@@ -121,7 +124,7 @@ int Networking::listen() {
     strcpy(msg.receiver,parts);
     strtok(NULL,":");
     strcpy(msg.message,parts);
-    delete[] message, parts;
+    delete[] message, parts;*/
     //this->ui.newMessage(msg); // FIXME
 }
 
