@@ -27,10 +27,11 @@
  * Used in communication between ui and Networking-object
  */
 struct Message {
-    char message[1024]; // dynamic length?
+    char message[1024]; // dynamic length? FIXME
     char sender[10];
     char receiver[10];
-}
+    char colour[7];
+};
 
 /*
  * Networking-object class 
@@ -39,43 +40,44 @@ struct Message {
 class Networking {
     private:
         int socket;
-        char host;
+        char* host; // length? FIXME
         int port;
         void *ui;
     public:
         char name[10];
         char colour[7];
-        char users; // ***change to dynamic array of char arrays***
+        char users; // ***change to dynamic array of char arrays*** FIXME
     
     /*
      * Constructor
      * @param pointer to ui-object
      */
-    Networking(void *ui_pointer) {
-        port = 13377;
-        strcpy(colour,"000000");
-        ui = ui_pointer;
-    }
+    Networking(void *ui_pointer);
+    /*
+     * Destructor
+     */
+    ~Networking();
     
     /*
      * Connects to server
      * Called by UI when trying to connect
+     * @param char[] host to connect
+     * @param char[] user name to use
      * @return < 0 in error
      */
-    int connect();
+    int connect(char[],char[]);
     
     /*
      * Sends message to server
-     * @param char[] receiver (can be 'All' or a username)
-     * @param char[] message to send
-     * @param int length of the message
+     * @param Message Message-structure to send
      * @return < 0 in error
      */
-        int sendMessage(Message);
+    int sendMessage(Message);
     
     /*
      * Listens for new messages
-     * Should be run frequently by UI
+     * Should be run frequently by UI and in case of new message calls
+     * ui's newMessage function
      * @return < 0 in error
      */
     int listen();
@@ -87,6 +89,6 @@ class Networking {
     
     private:
         char* receiveMessage(char*,int);
-        int sendMessage(char[],int);
+        int sendMessage(const char[],int);
 };
 #endif

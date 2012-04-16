@@ -18,12 +18,42 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define MSG_LENGTH 1024
+#define MSG_SYS_BASE :::SYSTEM:::
+#define MSG_SYS_CONNECT MSG_SYS_BASE1
+#define MSG_SYS_DISCONNECT MSG_SYS_BASE2
+#define MSG_SYS_CHKUSRNAME MSG_SYS_BASE3
+#define MSG_SYS_USRLIST MSG_SYS_BASE4 /* TBD */
+
 #include "networking.hpp"
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
+#include <string>
+#include <string.h>
 using namespace std;
 
-int Networking::connect() { // pitäskö tähän kuitenkin laittaa ip-osote parametriksi?
+Networking::Networking(void *ui_pointer) {
+    port = 13377;
+    strcpy(colour,"000000");
+    ui = ui_pointer;
+}
+
+Networking::~Networking() { // FIXME
+    //delete[] socket;
+    delete[] host;
+    //delete[] port;
+    //delete[] ui;
+    delete[] name;
+    delete[] colour;
+    //delete[] users;
+}
+
+int Networking::connect(char* host,char* uname) {
+    strcpy(this->host,host);
+    strcpy(this->name,uname);
+    delete[] host, uname;
+    
     int res; // result value
     struct sockaddr_in name;
     
@@ -33,28 +63,39 @@ int Networking::connect() { // pitäskö tähän kuitenkin laittaa ip-osote para
     }
     name.sin_family = AF_INET;
     name.sin_port = htons(this->port);
-    name.sin_addr.s_addr = htons(this->host);
+    name.sin_addr.s_addr = htons(inet_addr(this->host));
     
     res = ::connect(this->socket,(struct sockaddr *) &name,sizeof(name));
     if (res < 0) {
         return -2;
     }
-    // WIP
+    char msg[sizeof("MSG_SYS_CHKUSRNAME")+12] = "MSG_SYS_CHKUSRNAME[";
+    strcat(msg,this->name);
+    strcat(msg,"]");
+    sendMessage(msg,strlen(msg));
 }
 
-int Networking::sendMessage(char* message, int length=1024) {
+int Networking::sendMessage(Message message) {
+    int res;
+    string msg = "";
+    msg.append(this->name); // vai pitäskö käyttää message.sender ?
+    msg.append(":");
+    msg.append(this->colour); // vai pitäskö käyttää message.colour ?
+    msg.append(":");
+    msg.append(message.receiver);
+    msg.append(":");
+    msg.append(message.message);
+    res = sendMessage(msg.c_str(),msg.size());
+    return res;
+}
+
+int Networking::sendMessage(const char* message, int length=1024) {
     int res;
     res = send(socket, message, length, 0);
     return res;
 }
 
-int Networking::sendMessage(Message message) { // WIP
-    int res;
-    res = sendMessage(message,length);
-    return res;
-}
-
-char* Networking::receiveMessage(char* message, int length=1024) {
+char* Networking::receiveMessage(char* message, int length=MSG_LENGTH) {
     int res;
     res = recv(this->socket, message, length, 0);
     if (res < 0) {
@@ -69,10 +110,21 @@ int Networking::listen() {
     if (message == 0) {
         return 0;
     }
-    // paloittele ja sitten kutsu ui:n funktioita
+    Message msg;
+    char * parts;
+    parts = strtok(message,":");
+    // tarkistukset tähän
+    strcpy(msg.sender,parts);
+    strtok(NULL,":");
+    strcpy(msg.colour,parts);
+    strtok(NULL,":");
+    strcpy(msg.receiver,parts);
+    strtok(NULL,":");
+    strcpy(msg.message,parts);
+    delete[] message, parts;
+    //this->ui.newMessage(msg); // FIXME
 }
 
 void Networking::quit() {
     // tee poistumiskomennot
-    // vapauta muistia
 }
