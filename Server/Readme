@@ -1,3 +1,10 @@
 Still WIP!
 
 Please note that I am not professional programmer, nor I haven't had any courses with C++. All code made by me is in main file, shattered to smaller functions, but there are no seperate classes etc.
+
+To do:
+
+-Checking for invalid characters in name
+-Proper measures when chatter array is full
+-Admin commands (kick, showing connected clients etc.)
+-More security and more stable
