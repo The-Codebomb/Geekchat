@@ -53,6 +53,7 @@ void closeConnection(int posInArray);
 void removeChatter(int posInArray);
 void sendMsgForward(char msgBuffer[], int posInArray, int dontSendBack=-1);
 void sendUserList(int posInArray);
+int stringToCharArray(string stringText, char charText[], uint len);
 
 //mainListeningSocket = all incoming connections go here.
 int mainListeningSocket, tempSock;
@@ -62,7 +63,9 @@ struct chatter chatterArray[MAXUSERS];
 struct sockaddr_in clientname;
 uint32_t size;
 
-// Contains initializing (listening socket etc.) and main loop
+/*
+* Contains main loop and inizializing
+*/
 int main() {
     mainListeningSocket = make_socket(PORT);
 
@@ -105,7 +108,11 @@ int main() {
     return 0;
 }
 
-// Handles new message from client (send forward etc.)
+/*
+* Handles new message from client (send forward etc.)
+*@param msgBuffer[] contains new recieved message
+*@param posInArray position of sender in chatter array
+*/
 void newMessageFromClient(char msgBuffer[], int posInArray) {
 
     string message = msgBuffer;
@@ -172,9 +179,7 @@ void newMessageFromClient(char msgBuffer[], int posInArray) {
                 int msgLen = newMsgToClients.length();
                 char newMsgBuffer[msgLen];
 
-                for (int i=0; i < msgLen; i++) {
-                    newMsgBuffer[i] = newMsgToClients.at(i);
-                }
+                stringToCharArray(newMsgToClients, newMsgBuffer, msgLen);
 
                 sendMsgForward(newMsgBuffer, posInArray, posInArray);
             }
@@ -187,12 +192,51 @@ void newMessageFromClient(char msgBuffer[], int posInArray) {
     //Viestin tarkistus ja eteenpäin lähetys ym.
 }
 
-//Sends list of current users to given connection
+/*
+* Sends list of current users to given connection
+*@param posInArray position of sender in chatter array
+*/
 void sendUserList(int posInArray) {
+    string userList = ":::SYSTEM:::4[";
+    for (int i = 0; i < MAXUSERS; i++) {
+        if (chatterArray[i].ip == "") {
+            break;
+        }
+        userList.append(chatterArray[i].name + ",");
+    }
+    userList.append("]");
+    char msgBuffer[userList.length()];
 
+    if (stringToCharArray(userList, msgBuffer, BUFFER) == -1) {
+        errorMsg("Userlist bigger than the array size");
+    }
+
+    send(chatterArray[posInArray].socketID, msgBuffer, BUFFER, 0);
 }
 
-// Sends given message to all connected sockets
+/*
+* turns string into char array
+*@param stringText string that will be converted to char array
+*@param charText char array where new char array will be stored
+*@return success if -1, string was longer than array size.
+*/
+int stringToCharArray(string stringText, char charText[], uint len) {
+    if (len < stringText.length()) {
+        return -1;
+    }
+    for(uint i = 0; i < stringText.length(); i++) {
+        charText[i] = stringText.at(i);
+    }
+    return 1;
+}
+
+/*
+* Sends given message to all connected sockets
+*@param msgBuffer[] contains message which will be sent forward
+*@param posInArray position of sender in chatter array
+*@param dontSendBack position in chatter array where you don't
+                     want to send message (-1 = send to everybody)
+*/
 void sendMsgForward(char msgBuffer[], int posInArray, int dontSendBack) {
 
 
@@ -218,9 +262,7 @@ void sendMsgForward(char msgBuffer[], int posInArray, int dontSendBack) {
                 int strLength = newMsgString.length();
                 char newMessage[strLength];
 
-                for (int i=0; i < strLength; i++) {
-                    newMessage[i] = newMsgString.at(i);
-                }
+                stringToCharArray(newMsgString, newMessage, strLength);
 
                 sendMsgForward(newMessage, posInArray);
 
@@ -235,7 +277,10 @@ void sendMsgForward(char msgBuffer[], int posInArray, int dontSendBack) {
     }
 }
 
-// Closes connection to certain client and removes chatter
+/*
+* Closes connection to certain client and removes chatter
+*@param PosInArray position of sender in chat array
+*/
 void closeConnection(int posInArray) {
     //Close connection
     shutdown(chatterArray[posInArray].socketID, 2);
@@ -243,7 +288,11 @@ void closeConnection(int posInArray) {
     removeChatter(posInArray);
 }
 
-// Removes chatter element from chatters array
+/*
+* Removes chatter element from chatters array
+*@param posInArray position of sender in chat array
+                   This client will be removed
+*/
 void removeChatter(int posInArray) {
     chatterArray[posInArray].ip = "";
     chatterArray[posInArray].name = "";
@@ -261,7 +310,11 @@ void removeChatter(int posInArray) {
     }
 }
 
-// Adds new incoming connection to chatters array
+/*
+* Adds new incoming connection to chatters array
+*@param sock handle to socket
+*@param ipaddr address of connected client in presentation form (string/char[])
+*/
 void arrayAddSock(int sock, string ipaddr) {
     //Finds where is first "empty slot"
     for(int i = 0; i < MAXUSERS; i++) {
@@ -274,7 +327,11 @@ void arrayAddSock(int sock, string ipaddr) {
     return;
 }
 
-// Handles new incoming connection
+/*
+* Handles new incoming connection
+*@param sock handle to socket
+*@param ipaddr address of connected client in presentation form (string/char[])
+*/
 void newConnection(int sock, char ipaddr[]) {
     string tempAddr = ipaddr;
 
@@ -288,18 +345,27 @@ void newConnection(int sock, char ipaddr[]) {
     return;
 }
 
-// Prints out error msg and exits program
+/*
+* Prints out error msg and exits program
+*@param error error message to be printed
+*/
 void errorMsg(string error) {
-    cout << error << endl;
+    cout << "ERROR: " << error << endl;
     exit(EXIT_FAILURE);
 }
 
-// Prints out message
+/*
+* Prints out message
+*@param msg message to be printed
+*/
 void newMsg(string msg) {
     cout << msg << endl;
 }
 
-// Make listening socket
+/*
+* Creates listening socket
+*@param port port used when making the socket
+*/
 int make_socket (uint16_t port) {
     int sock;
     struct sockaddr_in name;
