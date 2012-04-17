@@ -4,7 +4,8 @@ Please note that I am not professional programmer, nor I haven't had any courses
 
 To do:
 
--Checking for invalid characters in name
+-Checking for invalid characters in name (Done partly)
+	- Checking names from messages
 -Proper measures when chatter array is full
 -Admin commands (kick, showing connected clients etc.)
 -More security and more stable

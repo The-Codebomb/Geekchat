@@ -1,7 +1,7 @@
 /*
     Geekchat server software.
     Copyright (C) 2012 Codebomb
-    Copyright (c) 2012 Anssi Kanervisto aka Miffyli
+    Copyright (c) 2012 Anssi "Miffyli" Kanervisto
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,10 +20,8 @@
 // geekchat server.
 
 #include <iostream>
-#include <stdio.h>
 #include <stdlib.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -72,6 +70,7 @@ int main() {
     if (listen (mainListeningSocket, 5) < 0) {
         errorMsg("Error in listening");
     }
+
     size = sizeof(clientname);
     char msgBuffer[BUFFER];
     int recvDat;
@@ -119,6 +118,31 @@ void newMessageFromClient(char msgBuffer[], int posInArray) {
     int msgLn = message.length();
     string checkIfSysMsg = "";
 
+    //Check if new message has new "illegal" name
+    /*
+    string parsedName = message.substr(0, message.find(":"));
+    if ((parsedName != string::npos) | (parsedName != "")) {
+        if (parsedName != chatterArray[posInArray].name) {
+
+            newMsg("---Illegal namechange!");
+            newMsg("---Saved name: " + chatterArray[posInArray].name);
+            newMsg("---Illegal name: " + message.substr(0, message.find(":")));
+
+            closeConnection(posInArray);
+            //Send disconnection message about crashed client
+            string newMsgString = ":::SYSTEM:::2[" +
+                                            chatterArray[posInArray].name + "]";
+            int strLength = newMsgString.length();
+            char newMessage[strLength];
+
+            stringToCharArray(newMsgString, newMessage, strLength);
+
+            sendMsgForward(newMessage, posInArray);
+            return;
+        }
+    }
+    */
+
     if (msgLn > 12) {
         checkIfSysMsg = message.substr(0,12);
     }
@@ -146,8 +170,7 @@ void newMessageFromClient(char msgBuffer[], int posInArray) {
 
             //Check for forbidden chars with regexp?
 
-            newMsg("---SYSTEM3 message");
-            bool nameInUse = false;
+            bool nameIsGood = true;
 
             if (message.length() < 16) {
                 newMsg("---Invalid msg length in system3: " + message);
@@ -155,18 +178,33 @@ void newMessageFromClient(char msgBuffer[], int posInArray) {
             }
             string sentName = message.substr(14, message.length() - 15);
             newMsg("...New name: " + sentName);
+
+            //Check name length
+            if ((sentName.length() < 3) | (sentName.length() > 10)) {
+                newMsg("...Invalid amount of chars");
+                nameIsGood = false;
+            }
+
+            //check invalid chars
+            if ((sentName.find(":") != string::npos) | (sentName.find("/") != string::npos)) {
+                newMsg("...Invalid chars in name");
+                nameIsGood = false;
+            }
+
             for (int i=0; i < MAXUSERS; i++) {
                 if (chatterArray[i].ip == "") {
                     break;
                 }
                 if (sentName == chatterArray[i].name) {
-                    nameInUse = true;
+                    nameIsGood = false;
                     break;
                 }
             }
 
-            if (nameInUse) {
+            if (!nameIsGood) {
                 //If name was already in use
+                // OR
+                //Has invalid amount of chars, or invalid ones
                 send(chatterArray[posInArray].socketID, "FALSE", BUFFER, 0);
             } else {
                 //If name is free to use
@@ -198,12 +236,14 @@ void newMessageFromClient(char msgBuffer[], int posInArray) {
 */
 void sendUserList(int posInArray) {
     string userList = ":::SYSTEM:::4[";
+
     for (int i = 0; i < MAXUSERS; i++) {
         if (chatterArray[i].ip == "") {
             break;
         }
         userList.append(chatterArray[i].name + ",");
     }
+
     userList.append("]");
     char msgBuffer[userList.length()];
 
@@ -321,9 +361,10 @@ void arrayAddSock(int sock, string ipaddr) {
         if (chatterArray[i].ip == "") {
             chatterArray[i].ip = ipaddr;
             chatterArray[i].socketID = sock;
-            break;
+            return;
         }
     }
+    newMsg("!!!User array is full!!!");
     return;
 }
 
