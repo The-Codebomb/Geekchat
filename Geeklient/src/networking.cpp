@@ -32,7 +32,7 @@
 #include <string.h>
 using namespace std;
 
-Networking::Networking(void *ui_pointer) {
+Networking::Networking(Ui *ui_pointer) {
     port = 13377;
     strcpy(colour,"000000");
     ui = ui_pointer;
@@ -65,10 +65,10 @@ int Networking::connect(string host,string uname) {
     message.append("]");
     sendMessage(message);
     string msg = receiveMessage();
-    if (msg == "FALSE") {
+    if (msg.data() == "FALSE") {
         return -1;
     }
-    
+    // WIP
 }
 
 int Networking::sendMessage(Message message) {
@@ -107,24 +107,20 @@ string Networking::receiveMessage(int length) {
     return message;
 }
 
-int Networking::listen() {
-    string message;
-    message = receiveMessage();
+int Networking::listen() { // lisää system komentojen ja muiden viestien käsittely
+    string message = receiveMessage();
     if (message.data() == 0) {
         return 0;
     }
-    Message msg;/*
-    char * parts;
-    parts = strtok(message,":");
-    // tarkistukset tähän
-    strcpy(msg.sender,parts);
-    strtok(NULL,":");
-    strcpy(msg.colour,parts);
-    strtok(NULL,":");
-    strcpy(msg.receiver,parts);
-    strtok(NULL,":");
-    strcpy(msg.message,parts);
-    delete[] message, parts;*/
+    Message msg;
+    size_t a,b;
+    a = message.find(":");
+    msg.sender = message.substr(0,a);
+    b = message.find(":",a);
+    message.copy(msg.colour,6,b);
+    a = message.find(":",b);
+    msg.receiver = message.substr(b,a);
+    msg.message = message.substr(a,message.size());
     //this->ui.newMessage(msg); // FIXME
 }
 

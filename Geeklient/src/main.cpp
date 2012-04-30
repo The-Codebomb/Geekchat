@@ -19,6 +19,11 @@
  */
 
 #include "networking.hpp"
+// Selecting ui
+#ifdef UI_GENERIC
+#include "ui/ui_generic.hpp"
+#endif
+
 using namespace std;
 
 /*
@@ -28,6 +33,7 @@ using namespace std;
  */
 
 int main(int argc, char** argv) {
-    void* ui;
+    Ui ui = Ui();
     Networking net = Networking(&ui);
+    ui.begin(&net);
 }

@@ -21,6 +21,10 @@
 #ifndef NETWORKING_OBJECT
 #define NETWORKING_OBJECT
 
+#ifdef UI_GENERIC
+#include "ui/ui_generic.hpp"
+#endif
+
 #include <string>
 
 #define MSG_LENGTH 1024
@@ -28,12 +32,14 @@
 /* 
  * Message-struct
  * Used in communication between ui and Networking-object
+ * Messages to be sent must have message and receiver filled
+ * Messages that are received are completely filled
  */
 struct Message {
     std::string message;
     std::string sender;
     std::string receiver;
-    std::string colour;
+    char colour[7];
 };
 
 /*
@@ -45,17 +51,18 @@ class Networking {
         int socket;
         std::string host;
         int port;
-        void *ui; // FIXME
+        Ui *ui;
     public:
         std::string name;
         char colour[7];
-        std::string users;
+        std::string users; // FIXME
     
     /*
      * Constructor
      * @param pointer to ui-object
      */
-    Networking(void *ui_pointer);
+    Networking(Ui*);
+    
     /*
      * Destructor
      */
