@@ -46,12 +46,16 @@ void errorMsg(string error);
 void newMsg(string msg);
 void arrayAddSock(int sock, string ipaddr);
 void newConnection(int sock, char ipaddr[]);
+void handleSystemMsg(string message, string checkIfSysMsg, int posInArray,
+                      int msgLn, char msgBuffer[]);
 void newMessageFromClient(char msgBuffer[], int posInArray);
 void closeConnection(int posInArray);
 void removeChatter(int posInArray);
 void sendMsgForward(char msgBuffer[], int posInArray, int dontSendBack=-1);
 void sendUserList(int posInArray);
 int stringToCharArray(string stringText, char charText[], uint len);
+
+
 
 //mainListeningSocket = all incoming connections go here.
 int mainListeningSocket, tempSock;
@@ -117,6 +121,7 @@ void newMessageFromClient(char msgBuffer[], int posInArray) {
     string message = msgBuffer;
     int msgLn = message.length();
     string checkIfSysMsg = "";
+    cout << message << " :: " << chatterArray[posInArray].socketID << endl;
 
     //Check if new message has new "illegal" name
     /*
@@ -143,91 +148,101 @@ void newMessageFromClient(char msgBuffer[], int posInArray) {
     }
     */
 
+
     if (msgLn > 12) {
         checkIfSysMsg = message.substr(0,12);
     }
 
     //Check if system message for program
     if (checkIfSysMsg == ":::SYSTEM:::") {
-
-        //Get system message number
-        if (msgLn < 12) {
-            newMsg("---Invalid system message number: " + message);
-            return;
-        }
-
-        checkIfSysMsg = message.at(12);
-        newMsg("--- System message: " + checkIfSysMsg);
-
-        //If system2 message, delete chatter from array.
-        if (checkIfSysMsg == "2") {
-            newMsg("--- Connection closed: " + chatterArray[posInArray].ip);
-            closeConnection(posInArray);
-            sendMsgForward(msgBuffer, posInArray);
-
-        //Check if client is asking name check
-        } else if (checkIfSysMsg == "3") {
-
-            //Check for forbidden chars with regexp?
-
-            bool nameIsGood = true;
-
-            if (message.length() < 16) {
-                newMsg("---Invalid msg length in system3: " + message);
-                return;
-            }
-            string sentName = message.substr(14, message.length() - 15);
-            newMsg("...New name: " + sentName);
-
-            //Check name length
-            if ((sentName.length() < 3) | (sentName.length() > 10)) {
-                newMsg("...Invalid amount of chars");
-                nameIsGood = false;
-            }
-
-            //check invalid chars
-            if ((sentName.find(":") != string::npos) | (sentName.find("/") != string::npos)) {
-                newMsg("...Invalid chars in name");
-                nameIsGood = false;
-            }
-
-            for (int i=0; i < MAXUSERS; i++) {
-                if (chatterArray[i].ip == "") {
-                    break;
-                }
-                if (sentName == chatterArray[i].name) {
-                    nameIsGood = false;
-                    break;
-                }
-            }
-
-            if (!nameIsGood) {
-                //If name was already in use
-                // OR
-                //Has invalid amount of chars, or invalid ones
-                send(chatterArray[posInArray].socketID, "FALSE", BUFFER, 0);
-            } else {
-                //If name is free to use
-                send(chatterArray[posInArray].socketID, "TRUE", BUFFER, 0);
-                chatterArray[posInArray].name = sentName;
-                sendUserList(posInArray);
-
-                //String -> Char array
-                string newMsgToClients = ":::SYSTEM:::1[" + sentName +"]";
-                int msgLen = newMsgToClients.length();
-                char newMsgBuffer[msgLen];
-
-                stringToCharArray(newMsgToClients, newMsgBuffer, msgLen);
-
-                sendMsgForward(newMsgBuffer, posInArray, posInArray);
-            }
-        }
-
+        handleSystemMsg(message, checkIfSysMsg, posInArray, msgLn, msgBuffer);
     } else {
         sendMsgForward(msgBuffer, posInArray);
     }
-    cout << message << " :: " << chatterArray[posInArray].socketID << endl;
     //Viestin tarkistus ja eteenpäin lähetys ym.
+}
+
+/*
+* Handles given system message
+*@param message contains recieved message
+*@param posInArray position of sender in chatter array
+*/
+void handleSystemMsg(string message, string checkIfSysMsg, int posInArray,
+                        int msgLn, char msgBuffer[]) {
+
+    //Get system message number
+    if (msgLn < 12) {
+        newMsg("---Invalid system message number: " + message);
+        return;
+    }
+
+    checkIfSysMsg = message.at(12);
+    newMsg("--- System message: " + checkIfSysMsg);
+
+    //If system2 message, delete chatter from array.
+    if (checkIfSysMsg == "2") {
+        newMsg("--- Connection closed: " + chatterArray[posInArray].ip);
+        closeConnection(posInArray);
+        sendMsgForward(msgBuffer, posInArray);
+
+    //Check if client is asking name check
+    } else if (checkIfSysMsg == "3") {
+
+        //Check for forbidden chars with regexp?
+
+        bool nameIsGood = true;
+
+        if (message.length() < 16) {
+            newMsg("---Invalid msg length in system3: " + message);
+            return;
+        }
+        string sentName = message.substr(14, message.length() - 15);
+        newMsg("...New name: " + sentName);
+
+        //Check name length
+        if ((sentName.length() < 3) | (sentName.length() > 10)) {
+            newMsg("...Invalid amount of chars");
+            nameIsGood = false;
+        }
+
+        //check invalid chars
+        if ((sentName.find(":") != string::npos) |
+                    (sentName.find("/") != string::npos)) {
+            newMsg("...Invalid chars in name");
+            nameIsGood = false;
+        }
+
+        for (int i=0; i < MAXUSERS; i++) {
+            if (chatterArray[i].ip == "") {
+                break;
+            }
+            if (sentName == chatterArray[i].name) {
+                nameIsGood = false;
+                break;
+            }
+        }
+
+        if (!nameIsGood) {
+            /*If name was already in use
+                OR
+                Has invalid amount of chars, or invalid ones */
+            send(chatterArray[posInArray].socketID, "FALSE", BUFFER, 0);
+        } else {
+            //If name is free to use
+            send(chatterArray[posInArray].socketID, "TRUE", BUFFER, 0);
+            chatterArray[posInArray].name = sentName;
+            sendUserList(posInArray);
+
+            //String -> Char array
+            string newMsgToClients = ":::SYSTEM:::1[" + sentName +"]";
+            int msgLen = newMsgToClients.length();
+            char newMsgBuffer[msgLen];
+
+            stringToCharArray(newMsgToClients, newMsgBuffer, msgLen);
+
+            sendMsgForward(newMsgBuffer, posInArray, posInArray);
+        }
+    }
 }
 
 /*
