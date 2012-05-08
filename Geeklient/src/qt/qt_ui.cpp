@@ -17,20 +17,43 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+ 
+ /*
+  * Wraps Qt based ui written by Topias
+  */
 
-#include "networking.hpp"
-#include "ui.hpp"
+#include <string>
+#include <QtGui/QApplication>
 
+#include "../networking.hpp"
+#include "chatwindow.h"
+#include "../ui.hpp"
 using namespace std;
 
-/*
- * Doesn't print anything to user nor ask any user input
- * Handles only initialization of ui and Networking and 
- * reading configuration file
- */
+#ifndef QT_UI
+#define QT_UI
 
-int main(int argc, char** argv) {
-    Ui ui = Ui();
-    Networking net = Networking(&ui);
-    ui.begin(&net);
+Ui::Ui();
+Ui::~Ui();
+
+void Ui::addNewMessage(struct Message message) {
+    ChatWindow::appendMessage(message->sender, message->message, 
+        message->colour);
 }
+void Ui::addNewUser(char[10] user) {
+    ChatWindow::newChatter(string(user));
+}
+void Ui::removeUser(char[10] user) {
+    ChatWindow::chatterLeft(string(user));
+}
+void Ui::showErrorMessage(char[3] type,std::string message);
+
+void Ui::begin(class Networking* net_obj)
+{
+    this->net = net_obj
+    QApplication a(argc, argv);
+    ChatWindow w;
+    w.show();
+}
+
+#endif // QT_UI

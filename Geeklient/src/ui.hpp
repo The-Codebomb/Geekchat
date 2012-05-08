@@ -26,7 +26,7 @@
 #ifndef UI_OBJECT
 #define UI_OBJECT
 
-#include "../networking.hpp"
+#include "networking.hpp"
 #include <string>
 
 class Ui {
@@ -49,13 +49,13 @@ class Ui {
      * Connects using Networking and attaches Networking::listen to timeout
      * @param pointer to Networking object
      */
-    void begin(Networking*);
+    void begin(class Networking*);
     
     /*
      * Displays new message
      * @param Message object as defined in ../networking.hpp
      */
-    void addNewMessage(Message);
+    void addNewMessage(struct Message);
     
     /*
      * Displays a new user in user list and/or displays a notification 

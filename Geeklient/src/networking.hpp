@@ -21,9 +21,7 @@
 #ifndef NETWORKING_OBJECT
 #define NETWORKING_OBJECT
 
-#ifdef UI_GENERIC
-#include "ui/ui_generic.hpp"
-#endif
+#include "ui.hpp"
 
 #include <string>
 
@@ -51,7 +49,7 @@ class Networking {
         int socket;
         std::string host;
         int port;
-        Ui *ui;
+        class Ui *ui;
     public:
         std::string name;
         char colour[7];
@@ -61,7 +59,7 @@ class Networking {
      * Constructor
      * @param pointer to ui-object
      */
-    Networking(Ui*);
+    Networking(class Ui*);
     
     /*
      * Destructor
